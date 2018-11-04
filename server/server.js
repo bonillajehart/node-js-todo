@@ -82,6 +82,18 @@ app.patch('/todos/:id', (request, response) => {
 	}).catch((error) => response.status(400).send());
 });
 
+
+app.post('/users', (request, response) => {
+	let body = _.pick(request.body, ['email', 'password', 'tokens']);
+	let user = new User(body);
+
+	user.save().then((document) => {
+		return response.send(document);
+	}).catch((error) => {
+		return response.status(400).send(error);		
+	});
+});
+
 app.listen(app_port, () => {
 	console.log(`Started on port ${app_port}`);
 });
