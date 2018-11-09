@@ -7,7 +7,8 @@ const body_parser = require('body-parser');
 const {ObjectID} = require('mongodb');
 const {mongoose}  = require('./db/mongoose');
 const {Todo} = require('./models/todo');
-const {User} = require('./models/user');	
+const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 let app = express();
 let app_port = process.env.PORT;
@@ -84,14 +85,20 @@ app.patch('/todos/:id', (request, response) => {
 
 
 app.post('/users', (request, response) => {
-	let body = _.pick(request.body, ['email', 'password', 'tokens']);
+	let body = _.pick(request.body, ['email', 'password']);
 	let user = new User(body);
 
-	user.save().then((document) => {
-		return response.send(document);
+	user.save().then((user) => {
+		return user.generateAuthToken();
+	}).then((token) => {
+		return response.header('x-auth', token).send(user);
 	}).catch((error) => {
-		return response.status(400).send(error);		
+		return response.status(400).send();		
 	});
+});
+
+app.get('/users/me', authenticate, (request, response) => {
+	response.send(request.user);
 });
 
 app.listen(app_port, () => {
